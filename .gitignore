@@ -1,0 +1,5 @@
+.terraform
+.terraform.lock.hcl
+*.tg_gen.tf
+.tfstate
+.DS_Store
