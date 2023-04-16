@@ -2,7 +2,7 @@ locals {
   env_name         = var.env_name
   app_name         = var.app_name
   tag_name         = "${var.env_name}-${var.app_name}"
-  domain_name      = "${var.evn_name}-${var.app_name}"
+  domain_name      = "${var.env_name}-${var.app_name}"
   master_user_name = var.opensearch.master_user_name
 }
 
