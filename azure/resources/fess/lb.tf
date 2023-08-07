@@ -1,59 +1,5 @@
-data "azurerm_resource_group" "fess" {
-  name = var.azure.resource_group_name
-}
-
 ####################################################
-# NIC
-####################################################
-resource "azurerm_network_interface" "fess" {
-  name                = "${var.env_name}-${var.app_name}-nic"
-  location            = data.azurerm_resource_group.fess.location
-  resource_group_name = data.azurerm_resource_group.fess.name
-
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = var.subnet_fess_id
-    private_ip_address_allocation = "Dynamic"
-  }
-}
-
-####################################################
-# VM
-####################################################
-resource "random_password" "vm" {
-  length      = 10
-  min_lower   = 1
-  min_upper   = 1
-  min_numeric = 1
-  min_special = 1
-  special     = true
-}
-
-resource "azurerm_windows_virtual_machine" "fess" {
-  count                 = var.fess.vm_count
-  name                  = "${var.env_name}-${var.app_name}-node-${count.index}"
-  resource_group_name   = data.azurerm_resource_group.fess.name
-  location              = data.azurerm_resource_group.fess.location
-  size                  = var.fess.vm_size
-  admin_username        = "fess"
-  admin_password        = random_password.vm.result
-  network_interface_ids = [azurerm_network_interface.fess.id]
-
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "StandardSSD_LRS"
-  }
-
-  source_image_reference {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2022-datacenter-g2"
-    version   = "latest"
-  }
-}
-
-####################################################
-# Load Balancer
+# Load Balancer for Fess
 ####################################################
 resource "azurerm_public_ip" "fess" {
   name                = "${var.env_name}-${var.app_name}-ip"
@@ -80,13 +26,16 @@ resource "azurerm_lb" "fess" {
 resource "azurerm_lb_backend_address_pool" "fess" {
   loadbalancer_id     = azurerm_lb.fess.id
   name                = "backend"
+
+  depends_on = [
+    azurerm_virtual_machine.fess
+  ]
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "fess" {
   network_interface_id    = azurerm_network_interface.fess.id
   ip_configuration_name   = "internal"
   backend_address_pool_id = azurerm_lb_backend_address_pool.fess.id
-
 }
 
 resource "azurerm_lb_probe" "fess" {
@@ -95,6 +44,12 @@ resource "azurerm_lb_probe" "fess" {
   request_path    = "/"
   port            = 8080
   loadbalancer_id = azurerm_lb.fess.id
+
+  depends_on = [
+    azurerm_virtual_machine.fess,
+    azurerm_network_interface.fess,
+    azurerm_network_interface_backend_address_pool_association.fess
+  ]
 }
 
 resource "azurerm_lb_rule" "fess" {

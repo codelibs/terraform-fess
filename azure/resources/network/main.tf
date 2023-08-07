@@ -31,13 +31,13 @@ resource "azurerm_network_security_group" "public_nsg" {
   resource_group_name = data.azurerm_resource_group.fess.name
 
   security_rule {
-    name                       = "AllowLBInbound"
+    name                       = "AllowInboundToFess"
     priority                   = 1001
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "80"
+    destination_port_range     = "8080"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
