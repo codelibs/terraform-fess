@@ -67,8 +67,10 @@ variable "azure" {
 
 variable "fess" {
   type = object({
-    vm_count = string
+    docker_fess_version = string
+    vm_count = number
     vm_size  = string
+    data_disk_size_gb = number
   })
 }
 

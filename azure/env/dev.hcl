@@ -8,7 +8,9 @@ locals {
     storage_account_name = "fess"
   }
   fess = {
-    vm_count = 1
-    vm_size = "Standard_B2s"
+    docker_fess_version = "v14.10.0"
+    vm_count = 2
+    vm_size = "Standard_B2ms"
+    data_disk_size_gb = 50
   }
 }

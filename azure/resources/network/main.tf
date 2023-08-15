@@ -1,5 +1,5 @@
 data "azurerm_resource_group" "fess" {
-    name = var.azure.resource_group_name
+  name = var.azure.resource_group_name
 }
 
 ####################################################
@@ -29,18 +29,6 @@ resource "azurerm_network_security_group" "public_nsg" {
   name                = "${var.app_name}-${var.env_name}-public-nsg"
   location            = data.azurerm_resource_group.fess.location
   resource_group_name = data.azurerm_resource_group.fess.name
-
-  security_rule {
-    name                       = "AllowInboundToFess"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "8080"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "public_nsg" {
@@ -48,10 +36,65 @@ resource "azurerm_subnet_network_security_group_association" "public_nsg" {
   network_security_group_id = azurerm_network_security_group.public_nsg.id
 }
 
+resource "azurerm_network_security_rule" "allow_ssh" {
+  name                        = "allow-ssh"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  network_security_group_name = azurerm_network_security_group.public_nsg.name
+  resource_group_name         = data.azurerm_resource_group.fess.name
+}
+
+resource "azurerm_network_security_rule" "allow_http_internal" {
+  name                        = "allow-http-internal"
+  priority                    = 101
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_ranges     = ["8080", "8443"]
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  network_security_group_name = azurerm_network_security_group.public_nsg.name
+  resource_group_name         = data.azurerm_resource_group.fess.name
+}
+
+resource "azurerm_network_security_rule" "allow_http_public" {
+  name                        = "allow-http-public"
+  priority                    = 102
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_ranges     = ["80", "443"]
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  network_security_group_name = azurerm_network_security_group.public_nsg.name
+  resource_group_name         = data.azurerm_resource_group.fess.name
+}
+
+resource "azurerm_network_security_rule" "allow_es_transport" {
+  name                        = "allow-es-transport"
+  priority                    = 103
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_ranges     = ["9300"]
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  network_security_group_name = azurerm_network_security_group.public_nsg.name
+  resource_group_name         = data.azurerm_resource_group.fess.name
+}
+
 ####################################################
 # Azure Bastion
 ####################################################
-
 resource "azurerm_subnet" "bastion" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.fess.name

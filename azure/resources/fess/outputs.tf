@@ -6,7 +6,7 @@ output "admin_password" {
 */
 
 output "admin_password_secret_name" {
-  value     = azurerm_key_vault_secret.fess_vm_password.name
+  value = azurerm_key_vault_secret.fess_vm_password.name
 }
 
 output "admin_password" {

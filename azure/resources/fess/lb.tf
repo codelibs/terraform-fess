@@ -24,8 +24,8 @@ resource "azurerm_lb" "fess" {
 }
 
 resource "azurerm_lb_backend_address_pool" "fess" {
-  loadbalancer_id     = azurerm_lb.fess.id
-  name                = "backend"
+  loadbalancer_id = azurerm_lb.fess.id
+  name            = "backend"
 
   depends_on = [
     azurerm_virtual_machine.fess
@@ -33,7 +33,8 @@ resource "azurerm_lb_backend_address_pool" "fess" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "fess" {
-  network_interface_id    = azurerm_network_interface.fess.id
+  count                   = var.fess.vm_count
+  network_interface_id    = azurerm_network_interface.fess[count.index].id
   ip_configuration_name   = "internal"
   backend_address_pool_id = azurerm_lb_backend_address_pool.fess.id
 }
@@ -59,5 +60,6 @@ resource "azurerm_lb_rule" "fess" {
   frontend_port                  = 80
   backend_port                   = 8080
   frontend_ip_configuration_name = azurerm_lb.fess.frontend_ip_configuration[0].name
-  backend_address_pool_ids        = [ azurerm_lb_backend_address_pool.fess.id ]
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.fess.id]
+  load_distribution              = "SourceIPProtocol"
 }
