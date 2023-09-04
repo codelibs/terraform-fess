@@ -50,11 +50,12 @@ sudo mkdir /mnt_datadisk/esdictionary01
 sudo chown -R 1000:1000 /mnt_datadisk/esdata01
 sudo chown -R 1000:1000 /mnt_datadisk/esdictionary01
 
-es_compose_file="/opt/docker-fess/compose/compose-elasticsearch8.yaml"
+es_compose_file="/opt/docker-fess/compose/compose-opensearch2.yaml"
 cp -f "$es_compose_file" "${es_compose_file}.origin"
 sed -i "s/- node.name=es01/- node.name=${node_name}/g" $es_compose_file
 sed -i "s/- discovery.seed_hosts=es01/- discovery.seed_hosts=${discovery_seed_hosts}/g" $es_compose_file
 sed -i "s/- cluster.initial_master_nodes=es01/- cluster.initial_master_nodes=${cluster_initial_master_nodes}/g" $es_compose_file
+sed -i "s/- cluster.initial_cluster_manager_nodes=es01/- cluster.initial_cluster_manager_nodes=${cluster_initial_master_nodes}/g" $es_compose_file
 
 sed -i 's@esdata01:/usr/share/elasticsearch/data@/mnt_datadisk/esdata01:/usr/share/elasticsearch/data@g' $es_compose_file
 sed -i 's@esdictionary01:/usr/share/elasticsearch/config/dictionary@/mnt_datadisk/esdictionary01:/usr/share/elasticsearch/config/dictionary@g' "$es_compose_file"
@@ -63,5 +64,6 @@ sed -i "/environment:/a \      - network.publish_host=${network_publish_host}" $
 sed -i "/ports:/a \      - 9300:9300" $es_compose_file
 
 # Run Fess
-docker compose --env-file .env.elasticsearch -f compose.yaml -f compose-elasticsearch8.yaml up -d
+docker compose --env-file .env -f compose.yaml -f compose-opensearch2.yaml up -d
+# docker compose --env-file .env.elasticsearch -f compose.yaml -f compose-elasticsearch8.yaml up -d
 
